@@ -59,7 +59,7 @@ Perfiles de build previstos en `eas.json`:
 ## CI/CD
 
 Los cambios se publican automáticamente con GitHub Actions al integrarse en la
-rama de publicación (`master`):
+rama principal (`main`):
 
 - **Solo JS/assets** → `eas update` (actualización OTA).
 - **Cambios nativos** (dependencias nativas, permisos, `app.json` nativo) →
@@ -74,7 +74,7 @@ Notas:
 ## Flujo de contribución
 
 - Una rama por tarea (`feat/...`, `fix/...`, `chore/...`) y Pull Request hacia
-  la rama de publicación; no se sube directo.
+  `main`; no se sube directo.
 - Commits pequeños, en inglés, con prefijo convencional (`feat:`, `fix:`,
   `chore:`).
 - Cada PR indica qué cambió, por qué, y si requiere un nuevo build nativo (APK)

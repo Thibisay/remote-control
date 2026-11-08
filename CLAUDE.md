@@ -35,7 +35,7 @@ Estado: proyecto desde cero. Se empieza por la configuración de Expo/EAS.
 6. Guardar varios TVs
 
 ## CI/CD
-- Push a `master` dispara GitHub Actions:
+- Push a `main` dispara GitHub Actions:
   - Solo cambios de JS/assets -> `eas update` (OTA)
   - Cambios nativos (dependencias nativas, permisos, app.json nativo) -> `eas build`
     (APK Android, perfil `preview`/`production`)
@@ -49,8 +49,8 @@ Estado: proyecto desde cero. Se empieza por la configuración de Expo/EAS.
 - Antes de agregar una dependencia, decir si es nativa (requiere nuevo build) o solo JS.
 - Si algo cambia la configuración nativa o el flujo de CI/CD, avisarlo explícitamente.
 - Explicar brevemente el porqué de las decisiones técnicas importantes.
-- Commits pequeños y descriptivos; trabajar en ramas y mergear a `master` solo
-  cuando funcione, porque `master` publica automáticamente.
+- Commits pequeños y descriptivos; trabajar en ramas y mergear a `main` solo
+  cuando funcione, porque `main` publica automáticamente.
 - No inventar detalles del protocolo del TV: si hay dudas, verificar contra
   documentación o implementaciones de referencia antes de asumir.
 - Probar en dispositivo real (celular + Android TV en la misma WiFi); el
@@ -67,11 +67,11 @@ Yo no escribo scripts ni comandos de git: tú te encargas de todo el control de 
 
 - Cuando termines una tarea que funcione, haz commit y push tú mismo, sin pedirme
   que ejecute nada.
-- Nunca subas directo a `master`. Crea una rama por tarea (`feat/...`, `fix/...`,
-  `chore/...`), haz push de la rama y abre un Pull Request hacia `master`.
+- Nunca subas directo a `main`. Crea una rama por tarea (`feat/...`, `fix/...`,
+  `chore/...`), haz push de la rama y abre un Pull Request hacia `main`.
 - El PR debe incluir: qué cambió, por qué, y si requiere nuevo build nativo (APK)
   o basta con una actualización OTA.
-- Yo reviso y apruebo el PR en GitHub. Al mergear a `master`, GitHub Actions
+- Yo reviso y apruebo el PR en GitHub. Al mergear a `main`, GitHub Actions
   publica automáticamente. No ejecutes `eas build` ni `eas update` a mano.
 - Commits pequeños, en inglés, con prefijo convencional (`feat:`, `fix:`, `chore:`).
 - Nunca subas secretos, tokens ni certificados de emparejamiento. Si detectas
