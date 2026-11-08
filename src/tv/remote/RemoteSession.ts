@@ -32,8 +32,6 @@ export class RemoteSession {
   private closed = false;
   private imeCounter = 0;
   private fieldCounter = 0;
-  /** What we have typed in the TV's current text field (the IME edit carries the whole text). */
-  private typed = '';
   private onClose: (() => void) | null = null;
 
   constructor(
@@ -97,23 +95,21 @@ export class RemoteSession {
   }
 
   sendKey(key: RemoteKey): void {
-    if (key === 'backspace') this.typed = this.typed.slice(0, -1);
-    if (key === 'enter') this.typed = '';
     this.write(buildKeyInject(KEY_FOR[key]));
   }
 
   /**
    * Types text live. Digits go as key presses (confirmed to work on the user's TV);
-   * everything else goes through the IME with the full text typed so far.
+   * everything else goes through the IME, one insert per character (only the new text:
+   * the TV inserts it at the cursor, so resending earlier text would duplicate it).
    */
   sendText(text: string): void {
     for (const char of text) {
-      this.typed += char;
       if (char >= '0' && char <= '9') {
         const code = keyCodeForChar(char);
         if (code !== null) this.write(buildKeyInject(code));
       } else {
-        this.write(buildImeBatchEdit(this.imeCounter, this.fieldCounter, this.typed));
+        this.write(buildImeBatchEdit(this.imeCounter, this.fieldCounter, char));
       }
     }
   }
@@ -182,9 +178,6 @@ export class RemoteSession {
       case 'imeBatch':
         this.imeCounter = event.imeCounter;
         this.fieldCounter = event.fieldCounter;
-        break;
-      case 'imeKeyInject':
-        this.typed = ''; // The TV switched app or text field.
         break;
       case 'ping':
         this.write(buildPingResponse(event.val1));
