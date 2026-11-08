@@ -4,6 +4,7 @@ export type {
   ConnectionState,
   ConnectionStatus,
   RemoteKey,
+  TvApp,
   TvDevice,
 } from './types';
 export { createTvRemote } from './createTvRemote';

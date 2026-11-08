@@ -20,7 +20,14 @@ export type RemoteKey =
   | 'volumeUp'
   | 'volumeDown'
   | 'mute'
-  | 'power';
+  | 'power'
+  | 'channelUp'
+  | 'channelDown'
+  | 'backspace'
+  | 'enter';
+
+/** Streaming apps the UI can ask the TV to open. */
+export type TvApp = 'youtube' | 'netflix' | 'xupertv' | 'prime' | 'disney' | 'hbo';
 
 /** Explicit connection states. */
 export type ConnectionState =
