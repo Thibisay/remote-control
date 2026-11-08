@@ -7,6 +7,7 @@ import { keyCodeForChar, KEY_FOR } from './keycodes';
 import {
   buildAppLink,
   buildConfigure,
+  buildImeBatchEdit,
   buildKeyInject,
   buildPingResponse,
   buildSetActive,
@@ -29,6 +30,10 @@ export class RemoteSession {
   private buffer = new Uint8Array(0);
   private features = OUR_FEATURES;
   private closed = false;
+  private imeCounter = 0;
+  private fieldCounter = 0;
+  /** What we have typed in the TV's current text field (the IME edit carries the whole text). */
+  private typed = '';
   private onClose: (() => void) | null = null;
 
   constructor(
@@ -92,14 +97,24 @@ export class RemoteSession {
   }
 
   sendKey(key: RemoteKey): void {
+    if (key === 'backspace') this.typed = this.typed.slice(0, -1);
+    if (key === 'enter') this.typed = '';
     this.write(buildKeyInject(KEY_FOR[key]));
   }
 
-  /** Types text as individual key presses; characters without a key code are skipped. */
+  /**
+   * Types text live. Digits go as key presses (confirmed to work on the user's TV);
+   * everything else goes through the IME with the full text typed so far.
+   */
   sendText(text: string): void {
     for (const char of text) {
-      const code = keyCodeForChar(char);
-      if (code !== null) this.write(buildKeyInject(code));
+      this.typed += char;
+      if (char >= '0' && char <= '9') {
+        const code = keyCodeForChar(char);
+        if (code !== null) this.write(buildKeyInject(code));
+      } else {
+        this.write(buildImeBatchEdit(this.imeCounter, this.fieldCounter, this.typed));
+      }
     }
   }
 
@@ -163,6 +178,13 @@ export class RemoteSession {
       case 'setActive':
         this.write(buildSetActive(this.features));
         ready();
+        break;
+      case 'imeBatch':
+        this.imeCounter = event.imeCounter;
+        this.fieldCounter = event.fieldCounter;
+        break;
+      case 'imeKeyInject':
+        this.typed = ''; // The TV switched app or text field.
         break;
       case 'ping':
         this.write(buildPingResponse(event.val1));
