@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Full Remote Control",
+    "slug": "full-remote-control",
+    "owner": "thibisayivanyss-team",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "platforms": ["android"],
+    "android": {
+      "package": "com.fullremotecontrol",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": "84973583-13e3-42d0-8254-11a4fcd68de3"
+      }
+    }
+  }
+}
