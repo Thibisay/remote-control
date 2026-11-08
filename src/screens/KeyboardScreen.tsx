@@ -16,10 +16,25 @@ const ROW3 = 'zxcvbnm'.split('');
 /** Full QWERTY keyboard. Every tap is sent to the TV right away. */
 export default function KeyboardScreen({ remote, tvName, onClose }: Props) {
   const [shift, setShift] = useState(false);
+  // What we have typed from this screen, shown on the phone. It is our own record of
+  // the keys sent, not read back from the TV, so it can differ if the TV field had text.
+  const [typed, setTyped] = useState('');
 
   const char = (c: string) => {
-    remote.sendText(shift ? c.toUpperCase() : c).catch(() => {});
+    const out = shift ? c.toUpperCase() : c;
+    remote.sendText(out).catch(() => {});
+    setTyped((t) => t + out);
     if (shift) setShift(false);
+  };
+
+  const backspace = () => {
+    remote.sendKey('backspace').catch(() => {});
+    setTyped((t) => t.slice(0, -1));
+  };
+
+  const search = () => {
+    remote.sendKey('enter').catch(() => {});
+    setTyped('');
   };
 
   const letterKey = (c: string) => (
@@ -35,7 +50,12 @@ export default function KeyboardScreen({ remote, tvName, onClose }: Props) {
         <View style={styles.dot} />
         <Text style={styles.liveText}>{tvName ? `Escribiendo en el TV · ${tvName}` : 'Sin TV conectado'}</Text>
       </View>
-      <Text style={styles.hint}>Cada tecla se envía al TV al instante. Enter confirma en el TV.</Text>
+      <View style={styles.preview}>
+        <Text style={typed ? styles.previewText : styles.previewEmpty} numberOfLines={2}>
+          {typed ? `${typed}▏` : 'Lo que escribas aparecerá aquí'}
+        </Text>
+      </View>
+      <Text style={styles.hint}>Cada tecla se envía al TV al instante. Buscar confirma en el TV.</Text>
       <View style={styles.spacer} />
       <View style={styles.kb}>
         <View style={styles.row}>{NUMBERS.map((c) => (
@@ -50,7 +70,7 @@ export default function KeyboardScreen({ remote, tvName, onClose }: Props) {
             <ShiftIcon size={24} color={shift ? colors.primary : colors.onSurface} />
           </Key>
           {ROW3.map(letterKey)}
-          <Key wide onPress={() => remote.sendKey('backspace').catch(() => {})}>
+          <Key wide onPress={backspace}>
             <BackspaceIcon size={24} />
           </Key>
         </View>
@@ -64,8 +84,11 @@ export default function KeyboardScreen({ remote, tvName, onClose }: Props) {
           <Key wide onPress={() => char('@')}>
             <Text style={styles.keyText}>@</Text>
           </Key>
-          <Key enter onPress={() => remote.sendKey('enter').catch(() => {})}>
-            <EnterIcon size={24} color={colors.onPrimary} />
+          <Key enter onPress={search}>
+            <View style={styles.searchContent}>
+              <EnterIcon size={20} color={colors.onPrimary} />
+              <Text style={styles.searchText}>Buscar</Text>
+            </View>
           </Key>
         </View>
       </View>
@@ -113,6 +136,19 @@ const styles = StyleSheet.create({
   },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
   liveText: { color: colors.onSurface, fontSize: 15, fontWeight: '500' },
+  preview: {
+    minHeight: 64,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceHigh,
+    marginBottom: 12,
+  },
+  previewText: { color: colors.onSurface, fontSize: 20 },
+  previewEmpty: { color: colors.onVariant, fontSize: 16 },
+  searchContent: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  searchText: { color: colors.onPrimary, fontSize: 14, fontWeight: '600' },
   hint: { color: colors.onVariant, fontSize: 13 },
   spacer: { flex: 1 },
   kb: { gap: 10 },
@@ -128,7 +164,7 @@ const styles = StyleSheet.create({
   },
   wide: { flex: 1.5, backgroundColor: colors.surfaceHigh },
   spaceKey: { flex: 5 },
-  enterKey: { flex: 1.8, backgroundColor: colors.primary },
+  enterKey: { flex: 2.6, backgroundColor: colors.primary },
   keyText: { color: colors.onSurface, fontSize: 18, fontWeight: '500' },
   space: { color: colors.onVariant, fontSize: 15 },
 });
