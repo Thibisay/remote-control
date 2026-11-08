@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import KeyboardScreen from './src/screens/KeyboardScreen';
-import NumpadScreen from './src/screens/NumpadScreen';
 import PairingScreen from './src/screens/PairingScreen';
 import RemoteScreen from './src/screens/RemoteScreen';
 import SearchScreen from './src/screens/SearchScreen';
@@ -12,7 +10,7 @@ import TvListSheet from './src/screens/TvListSheet';
 import { createTvRemote, useTvState, type TvDevice } from './src/tv';
 import { Screen } from './src/ui/components';
 
-type Route = 'remote' | 'search' | 'pairing' | 'numpad' | 'keyboard';
+type Route = 'remote' | 'search' | 'pairing';
 
 export default function App() {
   const remote = useMemo(() => createTvRemote(), []);
@@ -78,12 +76,6 @@ export default function App() {
     case 'pairing':
       screen = pairing ? <PairingScreen remote={remote} device={pairing} onCancel={cancelPairing} /> : null;
       break;
-    case 'numpad':
-      screen = <NumpadScreen remote={remote} tvName={connected?.name ?? null} onClose={() => setRoute('remote')} />;
-      break;
-    case 'keyboard':
-      screen = <KeyboardScreen remote={remote} tvName={connected?.name ?? null} onClose={() => setRoute('remote')} />;
-      break;
     default:
       screen = (
         <Screen>
@@ -91,8 +83,6 @@ export default function App() {
             remote={remote}
             tvName={connected?.name ?? null}
             onOpenTvList={() => setSheet(true)}
-            onOpenNumpad={() => setRoute('numpad')}
-            onOpenKeyboard={() => setRoute('keyboard')}
           />
         </Screen>
       );
