@@ -7,7 +7,9 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "platforms": ["android"],
+    "platforms": [
+      "android"
+    ],
     "android": {
       "package": "com.fullremotecontrol",
       "adaptiveIcon": {
@@ -22,6 +24,12 @@
       "eas": {
         "projectId": "84973583-13e3-42d0-8254-11a4fcd68de3"
       }
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/84973583-13e3-42d0-8254-11a4fcd68de3"
     }
   }
 }
