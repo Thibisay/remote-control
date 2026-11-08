@@ -1,4 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TvDevice } from '../tv';
 import { Button } from '../ui/components';
@@ -15,11 +16,30 @@ type Props = {
 };
 
 /** Bottom sheet with the saved TVs. */
-export default function TvListSheet({ visible, devices, activeId, onSelect, onAdd, onClose }: Props) {
+export default function TvListSheet(props: Props) {
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal
+      visible={props.visible}
+      transparent
+      animationType="slide"
+      onRequestClose={props.onClose}
+      statusBarTranslucent
+      navigationBarTranslucent
+    >
+      {/* A Modal is a separate root: it needs its own provider to read the insets. */}
+      <SafeAreaProvider>
+        <SheetContent {...props} />
+      </SafeAreaProvider>
+    </Modal>
+  );
+}
+
+function SheetContent({ devices, activeId, onSelect, onAdd, onClose }: Props) {
+  const insets = useSafeAreaInsets();
+  return (
+    <>
       <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel="Cerrar" />
-      <View style={styles.sheet}>
+      <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
         <View style={styles.handle} />
         <View style={styles.titleRow}>
           <Text style={styles.title}>Mis TVs</Text>
@@ -55,7 +75,7 @@ export default function TvListSheet({ visible, devices, activeId, onSelect, onAd
         )}
         <Button label="Agregar TV" icon={<AddIcon size={22} color={colors.onPrimary} />} onPress={onAdd} />
       </View>
-    </Modal>
+    </>
   );
 }
 

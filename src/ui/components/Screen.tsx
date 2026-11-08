@@ -1,19 +1,29 @@
 import type { ReactNode } from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '../theme';
 
-/** Dark full-screen container with the status-bar offset. */
+/** Dark full-screen container that respects the status bar and system navigation bar. */
 export function Screen({ children }: { children: ReactNode }) {
-  return <View style={styles.root}>{children}</View>;
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      style={[
+        styles.root,
+        {
+          paddingTop: insets.top + 12,
+          paddingBottom: insets.bottom + 16,
+          paddingLeft: insets.left + 20,
+          paddingRight: insets.right + 20,
+        },
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    paddingTop: (StatusBar.currentHeight ?? 24) + 12,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
+  root: { flex: 1, backgroundColor: colors.bg },
 });

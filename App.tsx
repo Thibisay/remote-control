@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import { BackHandler } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import KeyboardScreen from './src/screens/KeyboardScreen';
 import NumpadScreen from './src/screens/NumpadScreen';
@@ -95,7 +96,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <SafeAreaProvider>
       {screen}
       <TvListSheet
         visible={sheet}
@@ -112,6 +113,6 @@ export default function App() {
         onClose={() => setSheet(false)}
       />
       <StatusBar style="light" />
-    </>
+    </SafeAreaProvider>
   );
 }
