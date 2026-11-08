@@ -63,9 +63,10 @@ export default function RemoteScreen({
         </Pressable>
         <CircleButton
           size={44}
-          accessibilityLabel="Ajustes"
+          accessibilityLabel="Ajustes del TV"
           icon={<SettingsIcon size={22} />}
-          onPress={() => soon('Ajustes')}
+          disabled={!connected}
+          onPress={key('settings')}
         />
         <CircleButton
           size={44}

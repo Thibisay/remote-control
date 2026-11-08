@@ -17,6 +17,7 @@ export const KEYCODE = {
   VOLUME_MUTE: 164,
   CHANNEL_UP: 166,
   CHANNEL_DOWN: 167,
+  SETTINGS: 176,
 } as const;
 
 export const KEY_FOR: Record<RemoteKey, number> = {
@@ -35,6 +36,7 @@ export const KEY_FOR: Record<RemoteKey, number> = {
   channelDown: KEYCODE.CHANNEL_DOWN,
   backspace: KEYCODE.DEL,
   enter: KEYCODE.ENTER,
+  settings: KEYCODE.SETTINGS,
 };
 
 const PUNCTUATION: Record<string, number> = {
