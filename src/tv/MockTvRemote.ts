@@ -51,7 +51,7 @@ export class MockTvRemote implements TvRemote {
 
   async connect(device: TvDevice): Promise<void> {
     await this.wait(this.delayMs / 3);
-    this.setState({ status: 'pairing', device });
+    this.setState({ status: 'pairing', device, awaitingCode: true });
   }
 
   async submitPairingCode(code: string): Promise<void> {
