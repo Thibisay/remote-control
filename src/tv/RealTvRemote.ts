@@ -44,6 +44,8 @@ export class RealTvRemote implements TvRemote {
     this.closeSession();
     const attempt = ++this.attempt;
     this.setState({ status: 'pairing', device, awaitingCode: false });
+    // Let the UI show the "preparing" screen before any heavy work starts.
+    await new Promise<void>((resolve) => setTimeout(resolve, 50));
     try {
       // The first time this generates the client certificate; it can take a while.
       const identity = await getOrCreateIdentity();
