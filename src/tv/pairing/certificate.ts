@@ -2,6 +2,8 @@ import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import forge from 'node-forge';
 
+import { generateRsaKey } from './rsa';
+
 /** Client identity the TV remembers after pairing. */
 export type ClientIdentity = {
   /** X.509 certificate, PEM. */
@@ -24,17 +26,18 @@ export function publicPartsFromCert(certPem: string): { modulusHex: string; expo
   return { modulusHex: key.n.toString(16).toUpperCase(), exponentHex: key.e.toString(16).toUpperCase() };
 }
 
+const bigInt = (hex: string) => new forge.jsbn.BigInteger(hex, 16);
+
 /** Generates an RSA-2048 key and a self-signed certificate. Takes a few seconds on a phone. */
 export async function generateIdentity(): Promise<ClientIdentity> {
-  // Seed node-forge's PRNG with system randomness instead of Math.random.
-  // `collect` exists at runtime but is missing from @types/node-forge.
-  (forge.random as unknown as { collect(bytes: string): void }).collect(randomBinary(128));
-
-  const keys = await new Promise<forge.pki.rsa.KeyPair>((resolve, reject) => {
-    forge.pki.rsa.generateKeyPair({ bits: 2048, e: 0x10001 }, (err, pair) =>
-      err ? reject(err) : resolve(pair),
-    );
-  });
+  // Key generation uses native BigInt (see rsa.ts); node-forge's is far too slow on Hermes.
+  const k = await generateRsaKey(2048);
+  const keys = {
+    privateKey: forge.pki.setRsaPrivateKey(
+      bigInt(k.n), bigInt(k.e), bigInt(k.d), bigInt(k.p), bigInt(k.q), bigInt(k.dP), bigInt(k.dQ), bigInt(k.qInv),
+    ),
+    publicKey: forge.pki.setRsaPublicKey(bigInt(k.n), bigInt(k.e)),
+  };
 
   const cert = forge.pki.createCertificate();
   cert.publicKey = keys.publicKey;
