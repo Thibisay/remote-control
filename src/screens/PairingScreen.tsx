@@ -23,6 +23,7 @@ export default function PairingScreen({ remote, device, onCancel }: Props) {
   const input = useRef<React.ComponentRef<typeof TextInput>>(null);
 
   const failed = state.status === 'error';
+  const preparing = state.status === 'pairing' && !state.awaitingCode;
   const message = state.status === 'error' ? state.message : null;
 
   const onChange = (text: string) => {
@@ -59,7 +60,13 @@ export default function PairingScreen({ remote, device, onCancel }: Props) {
         </Text>
       </View>
 
-      <Pressable style={styles.boxes} onPress={() => input.current?.focus()}>
+      {preparing ? (
+        <Text style={styles.preparing}>
+          Preparando el emparejamiento… La primera vez puede tardar unos segundos.
+        </Text>
+      ) : null}
+
+      <Pressable style={[styles.boxes, preparing && { opacity: 0.4 }]} onPress={() => input.current?.focus()}>
         {Array.from({ length: CODE_LENGTH }, (_, i) => {
           const active = !failed && i === Math.min(code.length, CODE_LENGTH - 1);
           return (
@@ -81,6 +88,7 @@ export default function PairingScreen({ remote, device, onCancel }: Props) {
         value={code}
         onChangeText={onChange}
         autoFocus
+        editable={!preparing}
         autoCapitalize="characters"
         autoCorrect={false}
         maxLength={CODE_LENGTH}
@@ -96,7 +104,7 @@ export default function PairingScreen({ remote, device, onCancel }: Props) {
           <Button
             label={busy ? 'Emparejando…' : 'Emparejar'}
             onPress={submit}
-            disabled={busy || code.length < CODE_LENGTH}
+            disabled={busy || preparing || code.length < CODE_LENGTH}
           />
         )}
         <Button label="Cancelar" variant="outline" onPress={onCancel} />
@@ -131,6 +139,7 @@ const styles = StyleSheet.create({
   boxActive: { borderWidth: 2, borderColor: colors.primary },
   char: { color: colors.onSurface, fontSize: 26, fontWeight: '600' },
   hidden: { position: 'absolute', opacity: 0, width: 1, height: 1 },
+  preparing: { color: colors.onVariant, fontSize: 14, textAlign: 'center', marginBottom: 16 },
   error: { color: colors.danger, fontSize: 14, textAlign: 'center', marginTop: 16 },
   spacer: { flex: 1 },
   actions: { gap: 12 },

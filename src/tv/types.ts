@@ -33,7 +33,7 @@ export type TvApp = 'youtube' | 'netflix' | 'xupertv' | 'prime' | 'disney' | 'hb
 export type ConnectionState =
   | { status: 'disconnected' }
   | { status: 'searching' }
-  | { status: 'pairing'; device: TvDevice }
+  | { status: 'pairing'; device: TvDevice; awaitingCode: boolean }
   | { status: 'connected'; device: TvDevice }
   | { status: 'error'; message: string; device?: TvDevice };
 
