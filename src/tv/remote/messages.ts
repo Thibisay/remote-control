@@ -15,6 +15,8 @@ const F = {
   pingRequest: 8,
   pingResponse: 9,
   keyInject: 10,
+  imeKeyInject: 20,
+  imeBatchEdit: 21,
   start: 40,
   appLink: 90,
 } as const;
@@ -57,7 +59,25 @@ export function buildAppLink(link: string): number[] {
   return bytesField(F.appLink, stringField(1, link));
 }
 
+/**
+ * Text through the TV's IME (RemoteImeBatchEdit), as tronikos/androidtvremote2 send_text does:
+ * ime_counter/field_counter are the last values the TV reported, one insert (insert=1) whose
+ * RemoteImeObject {start=1, end=2, value=3} has start = end = len(text) - 1.
+ */
+export function buildImeBatchEdit(imeCounter: number, fieldCounter: number, text: string): number[] {
+  const last = Math.max(text.length - 1, 0);
+  const imeObject = [...varintField(1, last), ...varintField(2, last), ...stringField(3, text)];
+  const editInfo = [...varintField(1, 1), ...bytesField(2, imeObject)];
+  return bytesField(F.imeBatchEdit, [
+    ...varintField(1, imeCounter),
+    ...varintField(2, fieldCounter),
+    ...bytesField(3, editInfo),
+  ]);
+}
+
 export type RemoteEvent =
+  | { type: 'imeBatch'; imeCounter: number; fieldCounter: number }
+  | { type: 'imeKeyInject' }
   | { type: 'configure'; features: number }
   | { type: 'setActive' }
   | { type: 'ping'; val1: number }
@@ -82,6 +102,14 @@ export function parseRemoteMessage(bytes: Uint8Array): RemoteEvent {
         return { type: 'ping', val1: firstVarint(f.bytes, 1) };
       case F.start:
         return { type: 'start', started: firstVarint(f.bytes, 1) === 1 };
+      case F.imeBatchEdit:
+        return {
+          type: 'imeBatch',
+          imeCounter: firstVarint(f.bytes, 1),
+          fieldCounter: firstVarint(f.bytes, 2),
+        };
+      case F.imeKeyInject:
+        return { type: 'imeKeyInject' };
       case F.error:
         return { type: 'error' };
     }
