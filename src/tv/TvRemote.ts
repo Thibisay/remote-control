@@ -2,6 +2,7 @@ import type {
   ConnectionListener,
   ConnectionState,
   RemoteKey,
+  TvApp,
   TvDevice,
 } from './types';
 
@@ -27,6 +28,15 @@ export interface TvRemote {
 
   /** Send a button press to the connected TV. */
   sendKey(key: RemoteKey): Promise<void>;
+
+  /**
+   * Type text into the focused field of the TV, one press at a time
+   * (digits and letters). The UI calls this on every key tap, not on submit.
+   */
+  sendText(text: string): Promise<void>;
+
+  /** Ask the TV to open a streaming app. */
+  openApp(app: TvApp): Promise<void>;
 
   /** Close the connection. */
   disconnect(): Promise<void>;

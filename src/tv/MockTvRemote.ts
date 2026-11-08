@@ -3,6 +3,7 @@ import type {
   ConnectionListener,
   ConnectionState,
   RemoteKey,
+  TvApp,
   TvDevice,
 } from './types';
 
@@ -71,6 +72,20 @@ export class MockTvRemote implements TvRemote {
   }
 
   async sendKey(_key: RemoteKey): Promise<void> {
+    if (this.state.status !== 'connected') {
+      throw new Error('Not connected');
+    }
+    await this.wait(50);
+  }
+
+  async sendText(_text: string): Promise<void> {
+    if (this.state.status !== 'connected') {
+      throw new Error('Not connected');
+    }
+    await this.wait(30);
+  }
+
+  async openApp(_app: TvApp): Promise<void> {
     if (this.state.status !== 'connected') {
       throw new Error('Not connected');
     }
