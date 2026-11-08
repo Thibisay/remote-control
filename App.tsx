@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { BackHandler } from 'react-native';
+import { Alert, BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import KeyboardScreen from './src/screens/KeyboardScreen';
@@ -29,6 +29,9 @@ export default function App() {
     if (state.status === 'pairing') {
       setPairing(state.device);
       setRoute('pairing');
+    }
+    if (state.status === 'error' && route === 'search') {
+      Alert.alert('No se pudo conectar', state.message);
     }
     if (state.status === 'connected') {
       const device = state.device;

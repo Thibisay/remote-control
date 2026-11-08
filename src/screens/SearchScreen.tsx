@@ -19,10 +19,12 @@ export default function SearchScreen({ remote, onBack, onPick }: Props) {
   const [phase, setPhase] = useState<Phase>('scanning');
   const [devices, setDevices] = useState<TvDevice[]>([]);
   const [ip, setIp] = useState('192.168.1.');
+  const [scanError, setScanError] = useState<string | null>(null);
   const cancelled = useRef(false);
 
   const scan = () => {
     setPhase('scanning');
+    setScanError(null);
     remote
       .discover()
       .then((found) => {
@@ -30,8 +32,10 @@ export default function SearchScreen({ remote, onBack, onPick }: Props) {
         setDevices(found);
         setPhase(found.length > 0 ? 'results' : 'manual');
       })
-      .catch(() => {
-        if (!cancelled.current) setPhase('manual');
+      .catch((e: unknown) => {
+        if (cancelled.current) return;
+        setScanError(e instanceof Error ? e.message : String(e));
+        setPhase('manual');
       });
   };
 
@@ -123,6 +127,7 @@ export default function SearchScreen({ remote, onBack, onPick }: Props) {
                 <Text style={styles.tip}>• Celular y TV usan la misma red</Text>
                 <Text style={styles.tip}>• “Control remoto de Android TV” activo en el TV</Text>
               </View>
+              {scanError ? <Text style={styles.scanError}>{scanError}</Text> : null}
             </>
           )}
           <Text style={styles.label}>Dirección IP del TV</Text>
@@ -232,6 +237,7 @@ const styles = StyleSheet.create({
   },
   tips: { gap: 8, padding: 16, borderRadius: 16, backgroundColor: colors.surface, marginBottom: 20 },
   tip: { color: colors.onVariant, fontSize: 13 },
+  scanError: { color: colors.danger, fontSize: 12, marginBottom: 16 },
   label: { color: colors.onVariant, fontSize: 13, fontWeight: '500', marginBottom: 8 },
   input: {
     padding: 16,
