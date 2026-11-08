@@ -1,6 +1,8 @@
 import { discoverTvs } from './discovery';
 import { getOrCreateIdentity } from './pairing/certificate';
 import { PairingSession } from './pairing/PairingSession';
+import { RemoteSession } from './remote/RemoteSession';
+import { APP_LINKS } from './remote/appLinks';
 import type { TvRemote } from './TvRemote';
 import type {
   ConnectionListener,
@@ -10,16 +12,18 @@ import type {
   TvDevice,
 } from './types';
 
-const NOT_READY = 'Esta función aún no está implementada con TVs reales.';
 
 /**
  * Real implementation, built step by step.
- * Step 1: discovery over mDNS. Step 2: pairing (TLS + code). Commands come next.
+ * Discovery over mDNS, pairing (TLS + code) and the command connection (port 6466).
+ * connect() first tries the command connection (TV already paired); if the TV
+ * refuses it, it falls back to pairing.
  */
 export class RealTvRemote implements TvRemote {
   private state: ConnectionState = { status: 'disconnected' };
   private listeners = new Set<ConnectionListener>();
   private session: PairingSession | null = null;
+  private remoteSession: RemoteSession | null = null;
   private attempt = 0;
 
   getState = (): ConnectionState => this.state;
@@ -42,6 +46,7 @@ export class RealTvRemote implements TvRemote {
 
   async connect(device: TvDevice): Promise<void> {
     this.closeSession();
+    this.closeRemote();
     const attempt = ++this.attempt;
     this.setState({ status: 'pairing', device, awaitingCode: false });
     // Let the UI show the "preparing" screen before any heavy work starts.
@@ -49,6 +54,9 @@ export class RealTvRemote implements TvRemote {
     try {
       // The first time this generates the client certificate; it can take a while.
       const identity = await getOrCreateIdentity();
+      if (attempt !== this.attempt) return;
+      // Already paired? Then the command connection just works.
+      if (await this.openRemote(device, identity, attempt)) return;
       const session = new PairingSession(device.host, identity, 'Full Remote Control');
       this.session = session;
       await session.start();
@@ -68,32 +76,78 @@ export class RealTvRemote implements TvRemote {
       throw new Error('Not pairing: call connect() first');
     }
     try {
+      const attempt = this.attempt;
       await session.finish(code);
       this.closeSession();
-      // Paired. Sending keys needs the remote connection (next step).
-      this.setState({ status: 'connected', device: current.device });
+      const identity = await getOrCreateIdentity();
+      // Some TVs need a moment before accepting the command connection after pairing.
+      await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      if (!(await this.openRemote(current.device, identity, attempt))) {
+        throw new Error('Emparejado, pero el TV no aceptó la conexión de control.');
+      }
     } catch (e) {
       this.closeSession();
       this.setState({ status: 'error', message: errorMessage(e), device: current.device });
     }
   }
 
-  async sendKey(_key: RemoteKey): Promise<void> {
-    throw new Error(NOT_READY);
+  async sendKey(key: RemoteKey): Promise<void> {
+    this.requireRemote().sendKey(key);
   }
 
-  async sendText(_text: string): Promise<void> {
-    throw new Error(NOT_READY);
+  async sendText(text: string): Promise<void> {
+    this.requireRemote().sendText(text);
   }
 
-  async openApp(_app: TvApp): Promise<void> {
-    throw new Error(NOT_READY);
+  async openApp(app: TvApp): Promise<void> {
+    const link = APP_LINKS[app];
+    if (!link) throw new Error('Esta app aún no tiene un enlace verificado.');
+    this.requireRemote().sendAppLink(link);
   }
 
   async disconnect(): Promise<void> {
     this.attempt++;
     this.closeSession();
+    this.closeRemote();
     this.setState({ status: 'disconnected' });
+  }
+
+  /** Opens the command connection; true when the TV is ready (state becomes connected). */
+  private async openRemote(
+    device: TvDevice,
+    identity: Awaited<ReturnType<typeof getOrCreateIdentity>>,
+    attempt: number,
+  ): Promise<boolean> {
+    const remote = new RemoteSession(device.host, identity);
+    try {
+      await remote.start();
+    } catch {
+      remote.close();
+      return false;
+    }
+    if (attempt !== this.attempt) {
+      remote.close();
+      return true;
+    }
+    this.remoteSession = remote;
+    remote.setOnClose(() => {
+      if (this.remoteSession !== remote) return;
+      this.remoteSession = null;
+      this.setState({ status: 'error', message: 'Se perdió la conexión con el TV.', device });
+    });
+    this.setState({ status: 'connected', device });
+    return true;
+  }
+
+  private requireRemote(): RemoteSession {
+    const remote = this.remoteSession;
+    if (!remote || !remote.isOpen) throw new Error('No hay conexión con el TV');
+    return remote;
+  }
+
+  private closeRemote(): void {
+    this.remoteSession?.close();
+    this.remoteSession = null;
   }
 
   private closeSession(): void {
