@@ -61,7 +61,7 @@ export function buildAppLink(link: string): number[] {
 
 /**
  * Text through the TV's IME (RemoteImeBatchEdit), as tronikos/androidtvremote2 send_text does:
- * ime_counter/field_counter are the last values the TV reported, one insert (insert=1) whose
+ * Each call inserts only the new text. ime_counter/field_counter are the last values the TV reported, one insert (insert=1) whose
  * RemoteImeObject {start=1, end=2, value=3} has start = end = len(text) - 1.
  */
 export function buildImeBatchEdit(imeCounter: number, fieldCounter: number, text: string): number[] {
