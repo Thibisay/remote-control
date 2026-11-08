@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Alert, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { RemoteKey, TvApp, TvRemote } from '../tv';
 import { CircleButton } from '../ui/components';
@@ -7,7 +7,6 @@ import {
   AddIcon,
   AppsIcon,
   BackIcon,
-  CastIcon,
   DownIcon,
   HomeIcon,
   KeyboardIcon,
@@ -23,6 +22,8 @@ import {
   VolumeIcon,
 } from '../ui/icons';
 import { TV_APPS } from '../ui/apps';
+import KeyboardPanel from './KeyboardPanel';
+import NumpadPanel from './NumpadPanel';
 import { colors } from '../ui/theme';
 
 type Props = {
@@ -30,9 +31,9 @@ type Props = {
   /** Name of the connected TV, or null when not connected. */
   tvName: string | null;
   onOpenTvList: () => void;
-  onOpenNumpad: () => void;
-  onOpenKeyboard: () => void;
 };
+
+type Mode = 'dpad' | 'numpad' | 'keyboard';
 
 const soon = (what: string) => Alert.alert(what, 'Próximamente.');
 
@@ -40,9 +41,21 @@ export default function RemoteScreen({
   remote,
   tvName,
   onOpenTvList,
-  onOpenNumpad,
-  onOpenKeyboard,
 }: Props) {
+  // Which control is shown above the fixed bottom bar.
+  const [mode, setMode] = useState<Mode>('dpad');
+  const toggle = (m: Exclude<Mode, 'dpad'>) => setMode((cur) => (cur === m ? 'dpad' : m));
+
+  // Android back closes the numpad/keyboard first, instead of leaving the app.
+  useEffect(() => {
+    if (mode === 'dpad') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setMode('dpad');
+      return true;
+    });
+    return () => sub.remove();
+  }, [mode]);
+
   const connected = tvName !== null;
   const key = (k: RemoteKey) => () => {
     remote.sendKey(k).catch(() => {});
@@ -77,58 +90,76 @@ export default function RemoteScreen({
         />
       </View>
 
-      <View style={[styles.apps, !connected && styles.dim]} pointerEvents={connected ? 'auto' : 'none'}>
-        {TV_APPS.map((a) => (
-          <Pressable key={a.id} style={styles.chip} onPress={app(a.id)} accessibilityRole="button">
-            <View style={[styles.dot, { backgroundColor: a.color }]} />
-            <Text style={styles.chipText} numberOfLines={1}>
-              {a.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      {mode === 'dpad' ? (
+        <View style={[styles.apps, !connected && styles.dim]} pointerEvents={connected ? 'auto' : 'none'}>
+          {TV_APPS.map((a) => (
+            <Pressable key={a.id} style={styles.chip} onPress={app(a.id)} accessibilityRole="button">
+              <View style={[styles.dot, { backgroundColor: a.color }]} />
+              <Text style={styles.chipText} numberOfLines={1}>
+                {a.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
 
       <View style={[styles.body, !connected && styles.dim]} pointerEvents={connected ? 'auto' : 'none'}>
-        <View style={styles.dpad}>
-          <Arrow style={styles.up} onPress={key('up')} icon={<UpIcon size={34} />} />
-          <Arrow style={styles.down} onPress={key('down')} icon={<DownIcon size={34} />} />
-          <Arrow style={styles.left} onPress={key('left')} icon={<LeftIcon size={34} />} />
-          <Arrow style={styles.right} onPress={key('right')} icon={<RightIcon size={34} />} />
-          <Pressable style={styles.ok} onPress={key('ok')} accessibilityRole="button">
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
+        {mode === 'numpad' ? <NumpadPanel remote={remote} tvName={tvName} /> : null}
+        {mode === 'keyboard' ? <KeyboardPanel remote={remote} tvName={tvName} /> : null}
+        {mode === 'dpad' ? (
+          <>
+            <View style={styles.dpad}>
+              <Arrow style={styles.up} onPress={key('up')} icon={<UpIcon size={34} />} />
+              <Arrow style={styles.down} onPress={key('down')} icon={<DownIcon size={34} />} />
+              <Arrow style={styles.left} onPress={key('left')} icon={<LeftIcon size={34} />} />
+              <Arrow style={styles.right} onPress={key('right')} icon={<RightIcon size={34} />} />
+              <Pressable style={styles.ok} onPress={key('ok')} accessibilityRole="button">
+                <Text style={styles.okText}>OK</Text>
+              </Pressable>
+            </View>
 
-        <View style={styles.mid}>
-          <Rocker
-            label="Volumen"
-            top={<AddIcon size={26} />}
-            middle={<VolumeIcon size={22} color={colors.onVariant} />}
-            bottom={<RemoveIcon size={26} />}
-            onTop={key('volumeUp')}
-            onBottom={key('volumeDown')}
-          />
-          <View style={styles.center}>
-            <CircleButton size={56} label="Silencio" icon={<MuteIcon />} onPress={key('mute')} />
-            <CircleButton size={56} label="Voz" icon={<MicIcon />} onPress={() => soon('Micrófono')} />
-          </View>
-          <Rocker
-            label="Canal"
-            top={<UpIcon size={26} />}
-            middle={<Text style={styles.ch}>CH</Text>}
-            bottom={<DownIcon size={26} />}
-            onTop={key('channelUp')}
-            onBottom={key('channelDown')}
-          />
-        </View>
+            <View style={styles.mid}>
+              <Rocker
+                label="Volumen"
+                top={<AddIcon size={26} />}
+                middle={<VolumeIcon size={22} color={colors.onVariant} />}
+                bottom={<RemoveIcon size={26} />}
+                onTop={key('volumeUp')}
+                onBottom={key('volumeDown')}
+              />
+              <View style={styles.center}>
+                <CircleButton size={56} label="Silencio" icon={<MuteIcon />} onPress={key('mute')} />
+                <CircleButton size={56} label="Voz" icon={<MicIcon />} onPress={() => soon('Micrófono')} />
+              </View>
+              <Rocker
+                label="Canal"
+                top={<UpIcon size={26} />}
+                middle={<Text style={styles.ch}>CH</Text>}
+                bottom={<DownIcon size={26} />}
+                onTop={key('channelUp')}
+                onBottom={key('channelDown')}
+              />
+            </View>
+          </>
+        ) : null}
+      </View>
 
-        <View style={styles.bottom}>
-          <CircleButton label="Atrás" icon={<BackIcon />} onPress={key('back')} />
-          <CircleButton label="Inicio" icon={<HomeIcon />} onPress={key('home')} />
-          <CircleButton label="Números" icon={<AppsIcon />} onPress={onOpenNumpad} />
-          <CircleButton label="Teclado" icon={<KeyboardIcon />} onPress={onOpenKeyboard} />
-          <CircleButton label="Transmitir" icon={<CastIcon />} onPress={() => soon('Transmitir pantalla')} />
-        </View>
+      {/* Fixed bottom bar: always visible. Numbers and Keyboard switch the control above. */}
+      <View style={[styles.bottom, !connected && styles.dim]} pointerEvents={connected ? 'auto' : 'none'}>
+        <CircleButton label="Atrás" icon={<BackIcon />} onPress={key('back')} />
+        <CircleButton label="Inicio" icon={<HomeIcon />} onPress={key('home')} />
+        <CircleButton
+          label="Números"
+          icon={<AppsIcon color={mode === 'numpad' ? colors.primary : undefined} />}
+          background={mode === 'numpad' ? colors.primaryContainer : undefined}
+          onPress={() => toggle('numpad')}
+        />
+        <CircleButton
+          label="Teclado"
+          icon={<KeyboardIcon color={mode === 'keyboard' ? colors.primary : undefined} />}
+          background={mode === 'keyboard' ? colors.primaryContainer : undefined}
+          onPress={() => toggle('keyboard')}
+        />
       </View>
     </View>
   );
@@ -232,5 +263,5 @@ const styles = StyleSheet.create({
   rockerHalf: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   rockerLabel: { color: colors.onVariant, fontSize: 11, fontWeight: '500' },
   ch: { color: colors.onVariant, fontSize: 12, fontWeight: '600' },
-  bottom: { flexDirection: 'row', justifyContent: 'space-between' },
+  bottom: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 12 },
 });

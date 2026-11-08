@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { TvRemote } from '../tv';
-import { Screen, TopBar } from '../ui/components';
-import { BackspaceIcon, DownIcon, EnterIcon, ShiftIcon } from '../ui/icons';
+import { BackspaceIcon, EnterIcon, ShiftIcon } from '../ui/icons';
 import { colors } from '../ui/theme';
 
-type Props = { remote: TvRemote; tvName: string | null; onClose: () => void };
+type Props = { remote: TvRemote; tvName: string | null };
 
 const NUMBERS = '1234567890'.split('');
 const ROW1 = 'qwertyuiop'.split('');
@@ -14,7 +13,7 @@ const ROW2 = 'asdfghjkl'.split('');
 const ROW3 = 'zxcvbnm'.split('');
 
 /** Full QWERTY keyboard. Every tap is sent to the TV right away. */
-export default function KeyboardScreen({ remote, tvName, onClose }: Props) {
+export default function KeyboardPanel({ remote, tvName }: Props) {
   const [shift, setShift] = useState(false);
   // What we have typed from this screen, shown on the phone. It is our own record of
   // the keys sent, not read back from the TV, so it can differ if the TV field had text.
@@ -44,8 +43,7 @@ export default function KeyboardScreen({ remote, tvName, onClose }: Props) {
   );
 
   return (
-    <Screen>
-      <TopBar title="Teclado" icon={<DownIcon size={22} />} onBack={onClose} />
+    <View style={styles.root}>
       <View style={styles.live}>
         <View style={styles.dot} />
         <Text style={styles.liveText}>{tvName ? `Escribiendo en el TV · ${tvName}` : 'Sin TV conectado'}</Text>
@@ -92,7 +90,7 @@ export default function KeyboardScreen({ remote, tvName, onClose }: Props) {
           </Key>
         </View>
       </View>
-    </Screen>
+    </View>
   );
 }
 
@@ -123,6 +121,7 @@ function Key(props: {
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, marginTop: 18 },
   live: {
     flexDirection: 'row',
     alignItems: 'center',

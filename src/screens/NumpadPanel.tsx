@@ -1,11 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { TvRemote } from '../tv';
-import { Button, Screen, TopBar } from '../ui/components';
-import { BackspaceIcon, DownIcon } from '../ui/icons';
+import { Button } from '../ui/components';
+import { BackspaceIcon } from '../ui/icons';
 import { colors } from '../ui/theme';
 
-type Props = { remote: TvRemote; tvName: string | null; onClose: () => void };
+type Props = { remote: TvRemote; tvName: string | null };
 
 const ROWS = [
   ['1', '2', '3'],
@@ -15,15 +15,14 @@ const ROWS = [
 ];
 
 /** Numeric keypad. Every tap is sent to the TV right away. */
-export default function NumpadScreen({ remote, tvName, onClose }: Props) {
+export default function NumpadPanel({ remote, tvName }: Props) {
   const press = (k: string) => {
     const op = k === 'back' ? remote.sendKey('backspace') : remote.sendText(k);
     op.catch(() => {});
   };
 
   return (
-    <Screen>
-      <TopBar title="Números" icon={<DownIcon size={22} />} onBack={onClose} />
+    <View style={styles.root}>
       <View style={styles.live}>
         <View style={styles.dot} />
         <Text style={styles.liveText}>
@@ -47,11 +46,12 @@ export default function NumpadScreen({ remote, tvName, onClose }: Props) {
         ))}
       </View>
       <Button label="OK (confirmar en TV)" onPress={() => remote.sendKey('ok').catch(() => {})} />
-    </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, marginTop: 18 },
   live: {
     flexDirection: 'row',
     alignItems: 'center',
