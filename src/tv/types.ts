@@ -24,7 +24,8 @@ export type RemoteKey =
   | 'channelUp'
   | 'channelDown'
   | 'backspace'
-  | 'enter';
+  | 'enter'
+  | 'settings';
 
 /** Streaming apps the UI can ask the TV to open. */
 export type TvApp = 'youtube' | 'netflix' | 'xupertv' | 'prime' | 'disney' | 'hbo';
